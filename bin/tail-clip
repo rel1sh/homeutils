@@ -1,0 +1,79 @@
+#! /usr/local/bin/bash
+# tail-clip
+
+# default settings
+CLIP_NUM=1000
+
+usage () {
+	echo "Tail the last $CLIP_NUM lines of the given file into itself, truncating it"
+	echo "Usage: `basename $0` [-n #] [-q] <file-to-clip>"
+	echo "	-n int	number of lines to keep when truncating the file (default 1000)"
+	echo "	-q	quick mode, skips initial line count (good for big files)"
+	echo "	-h 	print this help"
+}
+
+if [ $# -eq 0 ]
+then
+	usage
+	exit 1
+fi
+
+if [ -e $1 -a -f $1 ]
+then
+	FILE=$1
+else
+	while getopts "f:n:qh" OPTS
+	do
+		case $OPTS in
+			n ) CLIP_NUM=$OPTARG ;;
+			q ) QUICK=1 ;;
+			h ) usage
+				exit 0
+				;;
+			* ) usage
+				exit 1
+				;;
+		esac
+	done
+	shift $(($OPTIND - 1))
+	if [ -z $1 ]
+	then
+		echo "*** error: please pass a file"
+		usage
+		exit 1
+	else
+		FILE=$1
+		FMODE=`stat -f "%Lp" $FILE`
+		FGRP=`stat -f "%Sg" $FILE`
+	fi
+fi
+
+if [ ! -w $FILE ]
+then
+	echo "Sorry, you don't have write permissions for $FILE"
+	exit 2
+fi
+
+echo "truncating $FILE"
+echo -n "keeping last $CLIP_NUM lines"
+
+if [ -z $QUICK ]
+then
+	LINES=`wc -l $FILE`
+	echo " of $LINES lines."
+else
+	echo " (quick mode)"
+fi
+#exit 0
+
+NEW_FILE="$FILE.new"
+tail -n $CLIP_NUM $FILE > $NEW_FILE
+#rm $FILE
+# move it back to the old name
+mv $NEW_FILE $FILE
+# set the old perms on it
+chmod $FMODE $FILE
+chgrp $FGRP $FILE
+NEW_LINES=`wc -l $FILE`
+echo "new line count: $NEW_LINES"
+

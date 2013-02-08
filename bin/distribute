@@ -1,0 +1,176 @@
+#! /usr/local/bin/bash
+edited="2012-06-29"
+version="0.4.0_7"
+# v0.4.0_7 - retired shoerack ;(
+# v0.4.0_6 - added more blades
+# v0.4.0_5 - moved shoeblade1 to dbservers
+# v0.4.0_4 - added shoeblade2 to webservers
+# v0.4.0_3 - added shoeblade13 to webservers
+# v0.4.0_2 - added shoebird to webservers
+# v0.4.0_1 - added shoebomb to webservers
+# v0.4.0 - added aggregate mode to copy the target file from each machine
+#          in the specified group to the target location on this machine
+# v0.3.4 - added shoebrush to the email servers
+# v0.3.3 - added version checking flag
+# v0.3.2 - now with ssh keys in effect, we should pause to show the user what
+#          destination they're about to copy their files to for a last chance.
+#          we'll offer the -f flag to force copying with a prompt
+# v0.3.0 - moved options processing to the bash getopts method
+# v0.2.6 - added check to see if the arg's dirname is different from their $HOME
+#          and query the user to see if they really want it in there instead
+#          this is only triggered if a 2nd arg is supplied, of course
+# v0.2.5 - added flags for copying files to web, mail, db machines
+# v0.2.2 - shows destination directory in debugging echo 
+#          shows last edited date via the following var: $edited
+#
+# v0.2.1 - whittled down the servers to just the machine name. This is now
+#          checked against the local system name with uname -n and a wildcard
+#
+# v0.2 - checks to see whether it's trying to copy to the current server and 
+#        prevents this from happening.
+#
+# v0.1 - basic file distribution utility to a set group of servers by name
+
+webservers=( shoehorn shoegoo shoeshine shoebird shoebomb shoeblade1 shoeblade2 shoeblade13 shoeblade9 )
+mailservers=( shoelace shoestring shoebrush )
+dbservers=( shoetree shoeblade12 )
+allservers=( ${webservers[@]} ${mailservers[@]} ${dbservers[@]} )
+
+workdir=`pwd`
+# set the default DST_DIR
+DST_DIR=$HOME
+
+usage () {
+	echo "Replicates a file to a defined list of servers" 
+	echo "Usage - `basename $0` [-d /path/on/targets] [-g web|mail|db] <file-to-send>"
+	echo "      -g string  copy to only a group of servers (options: web, mail, db)"
+	echo "      -f         force copying of the files without prompting"
+	echo "      -a         aggregate mode: copy the file on each machine to this one"
+	echo "                 NOTE: this prepends each machine name to the file"
+	echo "      -v         just show version and exit"
+	echo "      -d string  copy to a path other than the default ($DST_DIR)"
+	echo "                 This path should exist on the following target machines: "
+	echo -n "  "
+	for element in "${allservers[@]}"
+	do
+		echo -n " $element"
+	done
+	echo ""
+	echo "      -h         print this help"
+	version
+}
+version () {
+	echo "rel1shtech remote file distribute v$version, last edited: $edited"
+}
+
+if [[ $# -eq 0 ]]
+then
+	usage
+	exit 1
+else
+	while getopts "d:g:hfav" OPTS
+	do
+		case $OPTS in
+			d ) DST_OPT=$OPTARG ;;
+			g ) GROUP=$OPTARG ;;
+			f ) FORCE='yes' ;;
+			a ) AGGREGATE='yes' ;;
+			v ) version
+				exit 0
+				;;
+			h ) usage
+				exit 0
+				;;
+			* ) usage
+				exit 1
+				;;
+		esac
+	done
+	# grab everything after the flags
+	shift $(($OPTIND - 1))
+	if [ -z "$1" ]
+	then
+		usage
+		exit 1
+	else
+		FILE=$1
+	fi
+fi
+
+if [ -n "$DST_OPT" ]
+then
+	DST_DIR=$DST_OPT
+else
+	basedir=`dirname $FILE`
+	if [[ $basedir != $HOME ]]
+	then
+		# see if they really want it in $basedir...
+		echo -n "Do you want to copy to $basedir instead of $HOME? [y/n] "
+		read -n1 yn
+		if [[ $yn != "y" && $yn != "Y" ]]
+		then
+			DST_DIR=$HOME
+		else
+			DST_DIR=$basedir
+		fi
+	fi
+fi
+
+if [ -n "$GROUP" ]
+then
+	case "$GROUP" in
+		web ) servers=( ${webservers[@]} ) ;;
+		mail ) servers=( ${mailservers[@]} ) ;;
+		db ) servers=( ${dbservers[@]} ) ;;
+		* ) echo "don't know group '$GROUP', copying to all..."
+			servers=( ${allservers[@]} ) ;;
+	esac
+else
+	servers=( ${allservers[@]} )
+	GROUP='all'
+fi
+echo ""
+
+if [ -z "$FORCE" ]
+then
+	# if it's not being forced, confirm the destination and group we're copying
+	if [ -z "$AGGREGATE" ]
+	then
+		echo "Confirm: copying $FILE to $DST_DIR for group: $GROUP"
+	else
+		echo "Aggregate mode enabled..."
+		echo "Confirm: copying $FILE from servers in group $GROUP to $DST_DIR/<machine>-`basename $FILE`"
+	fi
+	echo -n "Continue? [y/n] "
+	read -n1 confirm
+	if [[ $confirm != "y" && $confirm != "Y" ]]
+	then
+		echo "...aborted."
+		exit 2
+	else
+		echo ""
+	fi
+fi
+
+MY_NAME=`uname -n`
+#echo $MY_NAME
+#echo $#
+for server in "${servers[@]}"
+  do
+	if [[ $MY_NAME != $server* ]]
+	then
+		echo ""
+		if [ -z "$AGGREGATE" ]
+		then
+			echo -n "copying $FILE > $server:$DST_DIR "
+			echo -n `scp $FILE alex@$server:$DST_DIR`
+		else
+			TMPFILE="$DST_DIR/$server-`basename $FILE`"
+			echo -n "copying $server:$FILE > $TMPFILE "
+			echo -n `scp alex@$server:$FILE $TMPFILE`
+		fi
+	fi
+done
+echo ""
+exit 0
+

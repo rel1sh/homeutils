@@ -1,0 +1,15 @@
+#!/usr/local/bin/bash
+# list installed ports, squelching those which are up-to-date
+
+ME=`whoami`
+OLDPORTS='/usr/ports/oldports.txt'
+if [[ "$ME" != "root" ]]
+then
+	echo "You own the ports database NOT"
+	exit 1
+fi
+
+/usr/local/sbin/portversion -v | egrep -v '=' 1>$OLDPORTS 2>/dev/null
+
+cat $OLDPORTS
+

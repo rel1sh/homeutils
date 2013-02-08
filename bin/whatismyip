@@ -1,0 +1,5 @@
+#!/bin/bash
+# curl's whatismyip.com's scraping server to get your "internet-facing" IP
+
+echo `curl -s http://ifconfig.me/`
+

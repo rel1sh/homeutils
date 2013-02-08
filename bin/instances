@@ -1,0 +1,51 @@
+#! /usr/local/bin/bash
+
+# count instances of the passed program/daemon via ps/top
+usage() {
+	echo "Usage - $0 [-m top|ps] <process/daemon>"
+	echo "	count instances of the passed program/daemon via top or ps"
+	echo "	-m	choice of top or ps for process search"
+	echo "	-q	quiet, don't print stuff"
+	#exit 1
+}
+
+while getopts "m:qh" OPTS
+do
+	case $OPTS in
+		m ) METHOD=$OPTARG ;;
+		q ) QUIET='yes' ;;
+		h ) usage
+			exit 0
+			;;
+	esac
+done
+# grab everything after the flags
+shift $(($OPTIND - 1))
+if [ -z "$1" ]
+then
+	usage
+	exit 1
+else
+	PROC=$1
+fi
+
+if [ -z "$METHOD" ]
+then
+	METHOD="ps"
+fi
+
+if [ -z "$QUIET" ]
+then
+	echo "Using $METHOD to search for $PROC..."
+fi
+
+case $METHOD in
+	top ) COUNT=`top -b all | egrep -v egrep | egrep -c "$PROC"` ;;
+	ps ) COUNT=`ps wwwaux | egrep -v egrep | egrep -c "$PROC"` ;;
+	* ) usage 
+		exit 1
+		;;
+esac
+
+echo $COUNT
+

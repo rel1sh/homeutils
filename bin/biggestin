@@ -1,0 +1,94 @@
+#! /usr/local/bin/bash
+# biggestin
+
+# returns the top 10 (or -n #) biggest files or dirs (-f/-d) in the
+# passed directory (last arg) or the current working dir otherwise
+#
+# by rel1sh 
+# updated 7/08/08
+
+# default settings
+n=10
+t="f"
+
+usage () {
+	echo "Prints the biggest files or dirs in a target dir (or working dir otherwise)"
+	echo "Usage: `basename $0` [-n #] [-l #] [-f | -d] [-s] [-q] [-h] [target-dir]"
+	echo "	-n int	number of results to return (default 10)"
+	echo "	-l int	levels below and including target-dir to look (default 0)"
+	echo "	-f	return results consisting of files (default)"
+	echo "	-d	return results consisting of directories"
+	echo "	-s 	short output, only returns file names, no file info"
+	echo "	-q 	be quiet, suppress all diagnostic output"
+	echo "	-h 	print this help"
+}
+
+if [ $# -eq 0 ]
+then
+	# use default settings
+	f=`pwd`
+else
+	while getopts "n:l:fdsqh" OPTS
+	do
+		case $OPTS in
+			f | d ) t=$OPTS ;;
+			n ) n=$OPTARG ;;
+			l ) depth=$OPTARG ;;
+			s ) short=1 ;;
+			q ) quiet=1 ;;
+			h ) usage
+				exit 0
+				;;
+			* ) usage
+				exit 1
+				;;
+		esac
+	done
+	shift $(($OPTIND - 1))
+	if [ -z $1 ]
+	then
+		f=`pwd`
+	else
+		f=$1
+	fi
+fi
+
+MSG="finding biggest $n"
+if [ "$t" == "d" ]
+then
+	MSG="$MSG dirs"
+else
+	MSG="$MSG files"
+fi
+
+if [ -n "$depth" ]
+then
+	deptharg="-maxdepth $depth"
+else
+	depth=0
+	deptharg="-depth 1"
+fi
+MSG="$MSG up to $depth levels in"
+
+if [ -z $quiet ]
+then
+	echo "$MSG $f ..."
+fi
+
+count=0
+for item in `find $f -type $t $deptharg -ls | awk '{print $7" "$11}' | sort -nr | head -n$n | awk '{print $2}'` 
+do 
+	if [ -z $short ]
+	then
+		ls -lhd $item
+	else
+		echo $item
+	fi
+	((count++))
+done
+
+if [[ "$count" == 0 && -z $quiet ]]
+then
+	echo "no results were found"
+fi
+

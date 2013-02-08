@@ -1,0 +1,5 @@
+#!/usr/local/bin/php
+<?php
+	# just a little tool to ring the system bell
+	echo "\n\x07";
+?>

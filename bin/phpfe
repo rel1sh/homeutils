@@ -1,0 +1,13 @@
+#!/bin/bash
+# returns a "yes" or "no" based on whether the passed function exists
+
+PHP_FUNC=$1
+if [ -z "$PHP_FUNC" ]
+then
+	echo "Please pass me a function name!"
+	echo "Usage: `basename $0` <php_function_name>"
+	exit
+fi
+
+echo `php -r "echo function_exists('$PHP_FUNC') ? 'yes' : 'no';"`
+

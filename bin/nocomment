@@ -1,0 +1,23 @@
+#!/bin/sh
+# strip out comments and (optionally) blank lines of a file
+
+FILE=$1
+COMMENT='\#'
+if [ -z "$FILE" ]
+then
+	echo "Usage: `basename $0` <filename> [comment-string]"
+	echo "   Strip out comments and blank lines. The default comment is: '#'"
+	echo "   The optional 2nd arg can be any string that you want interpreted"
+	echo "   as a single-line comment"
+	exit 1
+fi
+
+if [ -n "$2" ]
+then
+	# gotta comment
+	COMMENT=$2
+	echo "...using $COMMENT as comment string"
+fi
+
+egrep -v "^[[:space:]]*$COMMENT" $FILE | egrep -v '^$'
+

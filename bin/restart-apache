@@ -1,0 +1,45 @@
+#! /usr/local/bin/bash
+
+APACHECTL='/usr/local/sbin/apachectl'
+ME=`whoami`
+if [[ $ME != "root" ]]
+then
+	echo "Gotta be root, son. You don't wanna fuck with Laszlo."
+	exit 1
+fi
+
+RES=`$APACHECTL configtest 2>&1`
+#echo "'$RES'"
+if [[ $RES != "Syntax OK" ]]
+then
+	echo "Synax error in Apache config: "
+	echo $RES
+	echo "Please fix before restarting."
+	exit 1
+fi
+
+APACHEVERS=`/usr/local/sbin/httpd -v | egrep -i version | tr '/' ' ' | awk '{print $4}'`
+case $APACHEVERS in
+	1.* ) echo -n "Reloading for Apache 1."
+		RESOUT=`$APACHECTL graceful`
+		;;
+	2.* ) echo -n "Reloading for Apache 2."
+		RESOUT=`$APACHECTL graceful`
+		;;
+	* ) echo -n "Unknown Apache version ($APACHEVERS), using default reload."
+		RESOUT=`$APACHECTL graceful`
+		;;
+esac
+
+ISOK=$?
+case "$ISOK" in
+	0 ) echo "..success." ;;
+	1 ) echo "..not sure..?" ;;
+	8 ) echo "..config syntax error!" ;;
+	* ) echo "..FAILED. Check your logs."
+	    tail /var/log/httpd-error.log ;;
+esac
+echo $RESOUT
+
+exit
+
