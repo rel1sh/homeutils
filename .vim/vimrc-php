@@ -1,0 +1,7 @@
+let php_noindent_switch=1
+let php_folding=0
+
+set formatoptions=croql
+
+source /home/mike/.vim/indent/php.vim
+
