@@ -5,13 +5,16 @@
 # Alex's personal start-up file for bash
 # PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/usr/X11R6/bin:$HOME/bin; export PATH
 export PS1='(\[$(tput md)\]\t <\h:\w>\[$(tput me)\]) $(echo $?) \$ '
-export PATH=/home/alex/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:~vpopmail/bin:/var/qmail/bin
+export PATH=/home/alex/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin
+#export PATH=/home/alex/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:~vpopmail/bin:/var/qmail/bin
+export LANG='en_US.UTF-8'
 
 # some useful command line aliases
 alias astat='apachectl status'
 alias afstat='apachectl fullstatus'
 alias astatgrep='apachectl fullstatus | egrep'
 alias aconfig='apachectl configtest'
+alias clip='cut -c 1-80'
 alias df='df -h'
 alias digx='dig -x'
 alias dip='dig -x'
@@ -21,16 +24,18 @@ alias greps='ps wwaux | head -n 1 && ps wwaux | egrep'
 alias greptop='top -b 1 | head -n 8 && top -b all | egrep'
 alias dgrep='cat /var/run/dmesg.boot | grep -i'
 alias igrep='egrep -i'
+alias ipre="egrep -o '([0-9]{1,3}\.){3}[0-9]{1,3}'"
 alias ls='ls -lh'
 alias lsd='ls -d'
 alias rgrep='grep -rH'
 alias rigrep='grep -irH'
+alias s3sync='rsync -av --inplace'
 alias myfetch='fetch -o /home/alex/pub'
-alias sudo='sudo -E'
+alias pkgfetch='fetch -o /home/alex/package'
 alias up='cd ..'
 alias nocomments="egrep -v '^\#' | egrep -v '^$'"
+alias sudo="sudo -E"
 alias udiff='diff -u'
-alias wudo='sudo -u www'
 
 # Define some colors first:
 red='\e[0;31m'
