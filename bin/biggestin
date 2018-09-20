@@ -1,4 +1,4 @@
-#! /usr/local/bin/bash
+#!/bin/bash
 # biggestin
 
 # returns the top 10 (or -n #) biggest files or dirs (-f/-d) in the

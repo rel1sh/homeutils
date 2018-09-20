@@ -1,4 +1,4 @@
-#! /usr/local/bin/bash
+#!/bin/bash
 
 # count instances of the passed program/daemon via ps/top
 usage() {
